@@ -1,10 +1,10 @@
 # BlueDream-Lottery 🎁
 
 ![Java](https://img.shields.io/badge/Java-8%2B-orange)
-![Minecraft](https://img.shields.io/badge/Minecraft-1.12.2%2B-green)
+![Minecraft](https://img.shields.io/badge/Minecraft-1.7.10%2B-green)
 ![License](https://img.shields.io/badge/License-MIT-blue)
 
-BlueDream-Lottery 是一款功能强大、视觉效果震撼的 Minecraft 服务器抽奖插件。内置 10+ 种炫酷动画，支持全 GUI 操作，让你的服务器抽奖体验提升到一个新的高度！
+BlueDream-Lottery 是一款功能强大、视觉效果震撼的 Minecraft 服务器抽奖插件。内置 14+ 种炫酷动画，支持全 GUI 操作，让你的服务器抽奖体验提升到一个新的高度！
 
 ## ✨ 核心特性
 
@@ -21,6 +21,7 @@ BlueDream-Lottery 是一款功能强大、视觉效果震撼的 Minecraft 服务
 - **🎵 沉浸音效**：所有抽奖动画均有音效反馈，让每一次抽奖都充满仪式感。
 - **🌟 炫酷粒子**：新增 5 种炫酷环绕粒子特效（涡流、光环、星尘等），支持管理员 GUI 一键切换并自动保存。
 - **🌍 国际化支持**：支持 zh_cn / en_us 语言动态切换，自定义消息提示。
+- **🚀 全版本支持**：通过底层代码重构，实现了从 1.7.10 到 1.21.x 的适配。
 
 ## 📝 命令与权限
 
