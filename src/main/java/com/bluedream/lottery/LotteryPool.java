@@ -75,6 +75,14 @@ public class LotteryPool implements ConfigurationSerializable {
             if (!lore.contains(desc)) lore.add(desc);
             if (!lore.contains(rightClick)) lore.add(rightClick);
             
+            if (isConsumeChest()) {
+                String consume = Adapter.color(lm.getMessage("chest_lore_consume_on"));
+                if (!lore.contains(consume)) lore.add(consume);
+            } else {
+                String noConsume = Adapter.color(lm.getMessage("chest_lore_consume_off"));
+                if (!lore.contains(noConsume)) lore.add(noConsume);
+            }
+            
             meta.setLore(lore);
             item.setItemMeta(meta);
         }

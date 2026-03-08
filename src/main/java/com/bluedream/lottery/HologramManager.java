@@ -71,9 +71,7 @@ public class HologramManager {
 
             if (plugin.getConfig().getBoolean("hologram.show_text", true)) {
                 org.bukkit.entity.TextDisplay textDisplay = (org.bukkit.entity.TextDisplay) textLoc.getWorld().spawnEntity(textLoc, EntityType.valueOf("TEXT_DISPLAY"));
-                String title = plugin.getConfig().getString("hologram.text_format", "&6&l{name}")
-                        .replace("{name}", pool.getName());
-                textDisplay.setText(Adapter.color(title));
+                updateHologramText(textDisplay, pool);
                 textDisplay.setBillboard(org.bukkit.entity.Display.Billboard.CENTER);
                 
                 String bgColorStr = plugin.getConfig().getString("hologram.text_background_color", "DEFAULT");
@@ -94,6 +92,42 @@ public class HologramManager {
                 activeTextHolograms.put(loc, textDisplay);
             }
         });
+    }
+
+    private void updateHologramText(org.bukkit.entity.TextDisplay display, LotteryPool pool) {
+        LanguageManager lm = plugin.getLanguageManager();
+        String title = plugin.getConfig().getString("hologram.text_format", "&6&l{name}")
+                .replace("{name}", pool.getName());
+        
+        StringBuilder sb = new StringBuilder();
+        sb.append(title);
+        
+        if (plugin.getConfig().getBoolean("hologram.show_cost", true)) {
+            sb.append("\n");
+            String costText = "";
+            switch (pool.getCostType()) {
+                case "VAULT":
+                    costText = lm.getMessage("cost_vault")
+                        .replace("{value}", String.valueOf(pool.getCostValue()))
+                        .replace("{value10}", String.valueOf(pool.getCostValue() * 10));
+                    break;
+                case "PLAYERPOINTS":
+                    costText = lm.getMessage("cost_points")
+                        .replace("{value}", String.valueOf((int)pool.getCostValue()))
+                        .replace("{value10}", String.valueOf((int)(pool.getCostValue() * 10)));
+                    break;
+                case "KEY":
+                    costText = lm.getMessage("cost_key")
+                        .replace("{name}", pool.getKeyName());
+                    break;
+                default:
+                    costText = lm.getMessage("cost_free");
+                    break;
+            }
+            sb.append(costText);
+        }
+        
+        display.setText(Adapter.color(sb.toString()));
     }
 
     public void removeHologram(Location loc) {
@@ -154,10 +188,17 @@ public class HologramManager {
                             String poolName = plugin.getManager().getCachedLocations().get(loc);
                             if (poolName != null) {
                                 LotteryPool pool = plugin.getManager().getPool(poolName);
-                                if (pool != null && !pool.getItems().isEmpty()) {
-                                    int nextIndex = (itemIndices.getOrDefault(loc, 0) + 1) % pool.getItems().size();
-                                    display.setItemStack(pool.getItems().get(nextIndex).getItem());
-                                    itemIndices.put(loc, nextIndex);
+                                if (pool != null) {
+                                    if (!pool.getItems().isEmpty()) {
+                                        int nextIndex = (itemIndices.getOrDefault(loc, 0) + 1) % pool.getItems().size();
+                                        display.setItemStack(pool.getItems().get(nextIndex).getItem());
+                                        itemIndices.put(loc, nextIndex);
+                                    }
+                                    
+                                    Entity textEntity = activeTextHolograms.get(loc);
+                                    if (textEntity instanceof org.bukkit.entity.TextDisplay) {
+                                        updateHologramText((org.bukkit.entity.TextDisplay) textEntity, pool);
+                                    }
                                 }
                             }
                         }

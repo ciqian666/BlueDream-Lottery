@@ -69,7 +69,11 @@ public class LotteryPlayGUI implements Listener {
             costText = lm.getMessage("cost_free");
         }
         startLore.add(costText);
-        startLore.add(lm.getMessage("consume_chest").replace("{name}", pool.getName()));
+        
+        if (pool.isConsumeChest()) {
+            startLore.add(lm.getMessage("consume_chest").replace("{name}", pool.getName()));
+        }
+        
         startLore.add(" ");
         startLore.add(lm.getMessage("pity_progress").replace("{current}", String.valueOf(pity)).replace("{max}", String.valueOf(pool.getPityCount())));
 

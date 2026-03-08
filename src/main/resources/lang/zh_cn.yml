@@ -96,6 +96,8 @@ player_not_found: "&c未找到该玩家！"
 chest_name: "&6&l奖池宝箱: &f{name}"
 chest_lore_desc: "&7这是一个便携式奖池宝箱"
 chest_lore_right_click: "&e[右键] &f打开奖池预览"
+chest_lore_consume_on: "&7开启时将消耗此宝箱"
+chest_lore_consume_off: "&a开启时不消耗此宝箱"
 too_fast: "&c操作太快了，请等待 1 秒后再更改超级大奖设置。"
 
 start_animation: "&7点击开始动画"

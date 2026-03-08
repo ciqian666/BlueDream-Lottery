@@ -100,7 +100,7 @@ public class LotteryAdminGUI implements Listener {
                 "§7消耗模式: " + (pool.isConsumeChest() ? "§a消耗" : "§c不消耗"),
                 " ",
                 "§e左键 §7- 切换粒子效果",
-                "§e右键 §7- 切换消耗模式",
+                "§e右键 §7- 切换宝箱消耗模式",
                 "§eShift+右键 §7- 切换概率显示"));
 
         int start = page * 45;
