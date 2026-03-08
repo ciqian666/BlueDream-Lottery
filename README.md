@@ -1,10 +1,4 @@
-# BlueDream-Lottery 🎁
-
-![Java](https://img.shields.io/badge/Java-8%2B-orange)
-![Minecraft](https://img.shields.io/badge/Minecraft-1.7.10%2B-green)
-![License](https://img.shields.io/badge/License-MIT-blue)
-
-BlueDream-Lottery 是一款功能强大、视觉效果震撼的 Minecraft 服务器抽奖插件。内置 14+ 种炫酷动画，支持全 GUI 操作，让你的服务器抽奖体验提升到一个新的高度！
+# BlueDream-Lottery —— 14 种抽奖动画 | 设置方块/物品抽奖箱 | 超级大奖保底机制 | 指令奖励 | 全 GUI 编辑 [1.20-1.21]
 
 ## ✨ 核心特性
 
@@ -37,29 +31,13 @@ BlueDream-Lottery 是一款功能强大、视觉效果震撼的 Minecraft 服务
 | `/lt play <奖池名>` | 打开抽奖界面 | `bluedream.lottery.use` |
 | `/lt give <奖池> <数量> [玩家]` | 给予抽奖箱 | `bluedream.lottery.admin` |
 | `/lt reload` | 重载配置文件 | `bluedream.lottery.admin` |
-| `/lt lang <zh_cn|en_us>` | 切换语言 | `bluedream.lottery.admin` |
+| `/lt lang <zh_cn/en_us>` | 切换语言 | `bluedream.lottery.admin` |
 
 ## 📦 安装与依赖
 
 1. 下载 `BlueDream-Lottery.jar` 并放入 `plugins` 文件夹。
 2. 重启服务器。
 3. （可选）安装以下前置插件以获得完整体验：
-   - **Vault** (金币支持)
-   - **PlayerPoints** (点券支持)
-   - **PlaceholderAPI** (变量支持)
-
-## 🏗️ 构建项目
-
-本项目使用 Maven 构建。
-
-```bash
-git clone https://github.com/ciqian666/BlueDream-Lottery.git
-cd BlueDream-Lottery
-mvn clean package
-```
-
-构建完成后，插件 jar 包位于 `target` 目录下。
-
-## 📄 开源协议
-
-本项目采用 MIT 协议开源。
+   - **Vault**
+   - **PlayerPoints**
+   - **PlaceholderAPI**
