@@ -1,0 +1,56 @@
+# BlueDream-Lottery 配置文件
+# 作者Ci_qian(词芊)
+# 交流Q群:1081829014 (欢迎大家来van~)
+config-version: 1.1.3
+
+# 插件语言设置
+# 选项: zh_cn (简体中文), en_us (英语)
+language: zh_cn
+
+# 数据库配置
+database:
+  # 是否启用数据库功能 (启用后才可使用统计系统和排行榜)
+  enabled: false
+  # 数据库类型: sqlite, mysql, mariadb, postgresql
+  #高版本推荐mysql，插件报错请用mysql
+  type: sqlite
+  host: localhost
+  port: 3306
+  name: lottery_data
+  user: root
+  password: ""
+  # 表前缀
+  prefix: "bd_lottery_"
+  #最大连接池大小
+  pool_size: 10
+
+# 统计系统配置
+statistics:
+  # 是否开启统计系统
+  enabled: true
+  # 详细日志保留天数 (天)
+  retention_days: 30
+  # 排行榜更新间隔 (分钟)
+  ranking_update_interval: 10
+
+# 全息显示配置 (需要 1.19.4+ 版本支持)
+hologram:
+  # 是否开启方块上方的全息物品展示
+  enabled: true
+  # 物品旋转速度 (建议 1-5)
+  rotation_speed: 2
+  # 物品切换间隔 (秒)
+  cycle_interval: 3
+  # 是否显示奖池名称标题
+  show_text: true
+  # 标题格式
+  text_format: "&6&l{name} &f&l奖池"
+  # 物品展示的高度偏移 (相对于方块中心)
+  item_height_offset: 1.4
+  # 文本标题的高度偏移 (相对于方块中心)
+  text_height_offset: 1.8
+  # 文本背景颜色 (ARGB 十六进制格式, 例如 #00000000 为完全透明, #80000000 为半透明黑色)
+  # 设置为 "DEFAULT" 使用原版默认半透明背景
+  text_background_color: "DEFAULT"
+  # 是否启用文本阴影
+  text_shadow: true
