@@ -97,9 +97,11 @@ public class PlayerDataManager {
             return;
         }
 
-        org.bukkit.Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+        final File targetFile = new File(dataFolder, uuid.toString() + ".yml");
+        // 纯文件写入，用异步调度兼容 Folia
+        plugin.getFoliaLib().getImpl().runAsync(task -> {
             try {
-                config.save(new File(dataFolder, uuid.toString() + ".yml"));
+                config.save(targetFile);
             } catch (IOException e) {
                 e.printStackTrace();
             }

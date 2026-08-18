@@ -1,14 +1,15 @@
 package com.bluedream.lottery;
 
+import com.tcoded.folialib.wrapper.task.WrappedTask;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.ItemDisplay;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.bukkit.NamespacedKey;
 import org.bukkit.persistence.PersistentDataType;
@@ -21,6 +22,8 @@ public class HologramManager implements org.bukkit.event.Listener {
     private final Map<Location, Entity> activeTextHolograms = new ConcurrentHashMap<>();
     private final Map<Location, Integer> itemIndices = new ConcurrentHashMap<>();
     private final boolean isSupported;
+    private WrappedTask updateTask;
+    private final AtomicInteger tickCounter = new AtomicInteger(0);
 
     public NamespacedKey getHologramKey() {
         return hologramKey;
@@ -32,7 +35,8 @@ public class HologramManager implements org.bukkit.event.Listener {
         this.isSupported = Adapter.isDisplaySupported();
         if (isSupported) {
             startUpdateTask();
-            Bukkit.getScheduler().runTaskLater(plugin, this::cleanupOrphanedHolograms, 20L);
+            // 延迟清理孤儿实体，调度到全局区域线程（Folia）/主线程（Paper/Spigot）
+            plugin.getFoliaLib().getImpl().runLater(this::cleanupOrphanedHolograms, 20L);
         }
     }
 
@@ -141,12 +145,8 @@ public class HologramManager implements org.bukkit.event.Listener {
     }
 
     public void createHologram(Location loc, String poolName) {
-        if (!plugin.getServer().isPrimaryThread()) {
-            plugin.getServer().getScheduler().runTask(plugin, () -> createHologram(loc, poolName));
-            return;
-        }
         if (!isSupported || !plugin.getConfig().getBoolean("hologram.enabled", true)) return;
-        
+
         LotteryPool pool = plugin.getManager().getPool(poolName);
         if (pool == null) return;
 
@@ -155,21 +155,26 @@ public class HologramManager implements org.bukkit.event.Listener {
 
         Location itemLoc = loc.clone().add(0.5, itemHeight, 0.5);
         Location textLoc = loc.clone().add(0.5, textHeight, 0.5);
-        
-        Bukkit.getScheduler().runTask(plugin, () -> {
-            removeHologram(loc);
+
+        // 实体 spawn 与清理必须在该位置所在区域线程执行，兼容 Folia 多区域
+        plugin.getFoliaLib().getImpl().runAtLocation(loc, task -> {
+            // 先清理旧的全息图（直接清理，避免再次调度）
             removeNearbyHolograms(loc);
-            
+            forceRemoveNearbyDisplays(loc);
+            activeItemHolograms.remove(loc);
+            activeTextHolograms.remove(loc);
+            itemIndices.remove(loc);
+
             if (!pool.getItems().isEmpty()) {
                 ItemDisplay display = (ItemDisplay) itemLoc.getWorld().spawnEntity(itemLoc, EntityType.valueOf("ITEM_DISPLAY"));
                 display.setItemStack(pool.getItems().get(0).getItem());
                 display.setBillboard(ItemDisplay.Billboard.CENTER);
                 display.getPersistentDataContainer().set(hologramKey, PersistentDataType.BYTE, (byte) 1);
-                
+
                 org.bukkit.util.Transformation transformation = display.getTransformation();
                 transformation.getScale().set(0.6f, 0.6f, 0.6f);
                 display.setTransformation(transformation);
-                
+
                 activeItemHolograms.put(loc, display);
                 itemIndices.put(loc, 0);
             }
@@ -179,7 +184,7 @@ public class HologramManager implements org.bukkit.event.Listener {
                 updateHologramText(textDisplay, pool);
                 textDisplay.setBillboard(org.bukkit.entity.Display.Billboard.CENTER);
                 textDisplay.getPersistentDataContainer().set(hologramKey, PersistentDataType.BYTE, (byte) 1);
-                
+
                 String bgColorStr = plugin.getConfig().getString("hologram.text_background_color", "DEFAULT");
                 if (!bgColorStr.equalsIgnoreCase("DEFAULT")) {
                     try {
@@ -192,9 +197,9 @@ public class HologramManager implements org.bukkit.event.Listener {
                         }
                     } catch (Exception ignored) {}
                 }
-                
+
                 textDisplay.setShadowed(plugin.getConfig().getBoolean("hologram.text_shadow", true));
-                
+
                 activeTextHolograms.put(loc, textDisplay);
             }
         });
@@ -294,32 +299,31 @@ public class HologramManager implements org.bukkit.event.Listener {
     }
 
     public void removeHologram(Location loc) {
-        if (!plugin.getServer().isPrimaryThread()) {
-            plugin.getServer().getScheduler().runTask(plugin, () -> removeHologram(loc));
-            return;
-        }
-        removeNearbyHolograms(loc);
-        Entity itemEntity = activeItemHolograms.remove(loc);
-        if (itemEntity != null && itemEntity.isValid()) {
-            itemEntity.remove();
-        }
-        Entity textEntity = activeTextHolograms.remove(loc);
-        if (textEntity != null && textEntity.isValid()) {
-            textEntity.remove();
-        }
-        itemIndices.remove(loc);
-        forceRemoveNearbyDisplays(loc);
+        // 实体移除与附近实体查询必须在该位置所在区域线程执行，兼容 Folia 多区域
+        plugin.getFoliaLib().getImpl().runAtLocation(loc, task -> {
+            removeNearbyHolograms(loc);
+            Entity itemEntity = activeItemHolograms.remove(loc);
+            if (itemEntity != null && itemEntity.isValid()) {
+                itemEntity.remove();
+            }
+            Entity textEntity = activeTextHolograms.remove(loc);
+            if (textEntity != null && textEntity.isValid()) {
+                textEntity.remove();
+            }
+            itemIndices.remove(loc);
+            forceRemoveNearbyDisplays(loc);
+        });
     }
 
     public void removeAllHolograms() {
         for (Entity entity : activeItemHolograms.values()) {
             if (entity != null && entity.isValid()) {
-                entity.remove();
+                try { entity.remove(); } catch (Exception ignored) {}
             }
         }
         for (Entity entity : activeTextHolograms.values()) {
             if (entity != null && entity.isValid()) {
-                entity.remove();
+                try { entity.remove(); } catch (Exception ignored) {}
             }
         }
         activeItemHolograms.clear();
@@ -328,10 +332,7 @@ public class HologramManager implements org.bukkit.event.Listener {
     }
 
     public void refreshPoolHolograms(String poolName) {
-        if (!plugin.getServer().isPrimaryThread()) {
-            plugin.getServer().getScheduler().runTask(plugin, () -> refreshPoolHolograms(poolName));
-            return;
-        }
+        // 内部的 removeHologram/createHologram 会各自调度到对应区域，这里只需遍历（读 ConcurrentHashMap 线程安全）
         Map<Location, String> cachedLocations = plugin.getManager().getCachedLocations();
         for (Map.Entry<Location, String> entry : cachedLocations.entrySet()) {
             if (entry.getValue().equals(poolName)) {
@@ -342,83 +343,85 @@ public class HologramManager implements org.bukkit.event.Listener {
     }
 
     private void startUpdateTask() {
-        new BukkitRunnable() {
-            int ticks = 0;
-            @Override
-            public void run() {
-                if (!plugin.isEnabled()) {
-                    cancel();
-                    return;
+        updateTask = plugin.getFoliaLib().getImpl().runTimer(() -> {
+            if (!plugin.isEnabled()) {
+                if (updateTask != null) updateTask.cancel();
+                return;
+            }
+
+            final int ticks = tickCounter.incrementAndGet();
+            final float rotationSpeed = (float) plugin.getConfig().getDouble("hologram.rotation_speed", 2.0);
+            final int cycleInterval = plugin.getConfig().getInt("hologram.cycle_interval", 3) * 20;
+            final boolean checkPoolChanges = (ticks % 20 == 0);
+
+            for (Map.Entry<Location, Entity> entry : activeItemHolograms.entrySet()) {
+                Location loc = entry.getKey();
+                Entity entity = entry.getValue();
+
+                if (entity == null || entity.isDead()) {
+                    // 实体已死亡，仅清理 Map（无需区域调度）
+                    removeHologramFromMaps(loc);
+                    continue;
                 }
 
-                ticks++;
-                float rotationSpeed = (float) plugin.getConfig().getDouble("hologram.rotation_speed", 2.0);
-                int cycleInterval = plugin.getConfig().getInt("hologram.cycle_interval", 3) * 20;
+                if (!entity.isValid()) {
+                    // 区块卸载等导致的暂时失效，跳过等待重建
+                    continue;
+                }
 
-                boolean checkPoolChanges = (ticks % 20 == 0);
+                // 实体操作调度到其所在区域线程，兼容 Folia 多区域
+                plugin.getFoliaLib().getImpl().runAtLocation(loc, task -> {
+                    if (!(entity instanceof ItemDisplay)) return;
+                    ItemDisplay display = (ItemDisplay) entity;
+                    try {
+                        if (display.isDead() || !display.isValid()) return;
 
-                for (Map.Entry<Location, Entity> entry : activeItemHolograms.entrySet()) {
-                    Location loc = entry.getKey();
-                    Entity entity = entry.getValue();
+                        org.bukkit.util.Transformation transformation = display.getTransformation();
+                        transformation.getLeftRotation().rotationY((float) Math.toRadians(ticks * rotationSpeed));
+                        display.setTransformation(transformation);
 
-                    if (entity == null || entity.isDead()) {
-                        removeHologramFromMaps(loc);
-                        continue;
-                    }
+                        if (ticks % cycleInterval == 0 || checkPoolChanges) {
+                            String poolName = plugin.getManager().getCachedLocations().get(loc);
+                            if (poolName != null) {
+                                LotteryPool pool = plugin.getManager().getPool(poolName);
+                                if (pool != null) {
+                                    if (!pool.getItems().isEmpty() && (ticks % cycleInterval == 0)) {
+                                        int nextIndex = (itemIndices.getOrDefault(loc, 0) + 1) % pool.getItems().size();
+                                        display.setItemStack(pool.getItems().get(nextIndex).getItem());
+                                        itemIndices.put(loc, nextIndex);
+                                    }
 
-                    if (!entity.isValid()) {
-                        continue;
-                    }
-
-                    if (entity instanceof ItemDisplay) {
-                        ItemDisplay display = (ItemDisplay) entity;
-                        try {
-                            org.bukkit.util.Transformation transformation = display.getTransformation();
-                            transformation.getLeftRotation().rotationY((float) Math.toRadians(ticks * rotationSpeed));
-                            display.setTransformation(transformation);
-
-                            if (ticks % cycleInterval == 0 || checkPoolChanges) {
-                                String poolName = plugin.getManager().getCachedLocations().get(loc);
-                                if (poolName != null) {
-                                    LotteryPool pool = plugin.getManager().getPool(poolName);
-                                    if (pool != null) {
-                                        if (!pool.getItems().isEmpty() && (ticks % cycleInterval == 0)) {
-                                            int nextIndex = (itemIndices.getOrDefault(loc, 0) + 1) % pool.getItems().size();
-                                            display.setItemStack(pool.getItems().get(nextIndex).getItem());
-                                            itemIndices.put(loc, nextIndex);
-                                        }
-
-                                        Entity textEntity = activeTextHolograms.get(loc);
-                                        if (textEntity != null && textEntity.isValid() && checkPoolChanges) {
-                                            updateHologramText((org.bukkit.entity.TextDisplay) textEntity, pool);
-                                        }
-                                    } else {
-                                        removeHologram(loc);
-                                        continue;
+                                    Entity textEntity = activeTextHolograms.get(loc);
+                                    if (textEntity != null && textEntity.isValid() && checkPoolChanges) {
+                                        updateHologramText((org.bukkit.entity.TextDisplay) textEntity, pool);
                                     }
                                 } else {
-                                    removeHologram(loc);
-                                    continue;
+                                    // 奖池已不存在，当前已在区域线程，直接清理
+                                    removeHologramFromMaps(loc);
                                 }
+                            } else {
+                                removeHologramFromMaps(loc);
                             }
-                        } catch (Exception e) {
-                            removeHologramFromMaps(loc);
-                            if (entity.isValid()) entity.remove();
+                        }
+                    } catch (Exception e) {
+                        removeHologramFromMaps(loc);
+                        if (display.isValid()) {
+                            try { display.remove(); } catch (Exception ignored) {}
                         }
                     }
-                }
+                });
             }
-        }.runTaskTimer(plugin, 1L, 1L);
+        }, 1L, 1L);
     }
 
     private void removeHologramFromMaps(Location loc) {
         Entity itemEntity = activeItemHolograms.remove(loc);
         if (itemEntity != null && itemEntity.isValid()) {
-            itemEntity.remove();
+            try { itemEntity.remove(); } catch (Exception ignored) {}
         }
         Entity textEntity = activeTextHolograms.remove(loc);
         if (textEntity != null && textEntity.isValid()) {
-            textEntity.remove();
+            try { textEntity.remove(); } catch (Exception ignored) {}
         }
         itemIndices.remove(loc);
     }

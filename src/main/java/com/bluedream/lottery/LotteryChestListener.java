@@ -51,7 +51,7 @@ public class LotteryChestListener implements Listener {
                             plugin.getPlayGUI().open(player, pool);
                             player.sendMessage(lm.getMessage("opening_pool").replace("{name}", pool.getName()));
                         } else {
-                            player.sendMessage(lm.getMessage("pool_not_found"));
+                            player.sendMessage(lm.getMessage("pool_no_longer_exists"));
                         }
                     }
                 }

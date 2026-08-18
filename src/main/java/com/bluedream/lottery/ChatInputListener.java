@@ -5,7 +5,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -133,12 +132,10 @@ public class ChatInputListener implements Listener {
             plugin.getManager().savePool(session.pool);
         }
 
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                plugin.getAdminGUI().openPoolEditor(player, session.pool);
-            }
-        }.runTask(plugin);
+        // AsyncPlayerChatEvent 在异步线程触发，打开 GUI 需调度到玩家实体所在区域（兼容 Folia）
+        plugin.getFoliaLib().getImpl().runAtEntity(player, task -> {
+            plugin.getAdminGUI().openPoolEditor(player, session.pool);
+        });
     }
 
     private enum SessionType {

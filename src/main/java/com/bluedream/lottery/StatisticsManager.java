@@ -20,7 +20,8 @@ public class StatisticsManager {
     }
 
     public void logDraw(UUID uuid, String name, String poolName, String itemName, String itemDisplayName, boolean isGrandPrize, String costType, double costValue) {
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+        // 纯数据库操作，用异步调度兼容 Folia
+        plugin.getFoliaLib().getImpl().runAsync(task -> {
             String prefix = db.getPrefix();
             try (Connection conn = db.getConnection()) {
                 String logSql = "INSERT INTO " + prefix + "logs (player_uuid, player_name, pool_name, item_name, item_display_name, is_grand_prize, cost_type, cost_value) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
@@ -125,10 +126,11 @@ public class StatisticsManager {
 
     private void startRankingTask() {
         long interval = plugin.getConfig().getLong("statistics.ranking_update_interval", 10) * 20 * 60;
-        Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, this::updateRankings, 20 * 5, interval);
-        
+        // 异步定时任务，纯 SQL 操作，用 FoliaLib 异步调度兼容 Folia
+        plugin.getFoliaLib().getImpl().runTimerAsync(this::updateRankings, 20 * 5, interval);
+
         long maintenanceInterval = 24 * 60 * 60 * 20;
-        Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, this::performMaintenance, 20 * 60, maintenanceInterval);
+        plugin.getFoliaLib().getImpl().runTimerAsync(this::performMaintenance, 20 * 60, maintenanceInterval);
     }
 
     public void updateRankings() {

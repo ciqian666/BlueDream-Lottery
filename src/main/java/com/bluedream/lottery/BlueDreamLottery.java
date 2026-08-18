@@ -1,5 +1,6 @@
 package com.bluedream.lottery;
 
+import com.tcoded.folialib.FoliaLib;
 import net.milkbowl.vault.economy.Economy;
 import org.bstats.bukkit.Metrics;
 import org.bukkit.plugin.RegisteredServiceProvider;
@@ -18,12 +19,16 @@ public class BlueDreamLottery extends JavaPlugin {
     private Object ppAPI = null;
     private DatabaseManager databaseManager;
     private StatisticsManager statisticsManager;
+    private FoliaLib foliaLib;
 
     @Override
     public void onEnable() {
         try {
             instance = this;
-            
+
+            // 初始化 Folia 兼容调度器，自动适配 Folia/Paper/Spigot
+            foliaLib = new FoliaLib(this);
+
             saveDefaultConfig();
             languageManager = new LanguageManager(this);
 
@@ -75,7 +80,9 @@ public class BlueDreamLottery extends JavaPlugin {
                 new LotteryExpansion(this).register();
             }
 
-            new ParticleTask(this).runTaskTimer(this, 20L, 4L);
+            ParticleTask particleTask = new ParticleTask(this);
+            // 使用 FoliaLib 调度，兼容 Folia 的全局区域线程；在 Paper/Spigot 上等同主线程定时任务
+            getFoliaLib().getImpl().runTimer(particleTask::run, 20L, 4L);
 
             // 初始化数据统计
             int pluginId = 32513;
@@ -169,6 +176,10 @@ public class BlueDreamLottery extends JavaPlugin {
 
     public static BlueDreamLottery getInstance() {
         return instance;
+    }
+
+    public FoliaLib getFoliaLib() {
+        return foliaLib;
     }
 
     public DatabaseManager getDatabaseManager() {

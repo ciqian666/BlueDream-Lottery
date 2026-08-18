@@ -86,7 +86,8 @@ public class LotteryManager {
 
         final FileConfiguration configSnapshot = blocksConfig;
         final File fileSnapshot = blocksFile;
-        org.bukkit.Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+        // 纯文件写入，用异步调度兼容 Folia
+        plugin.getFoliaLib().getImpl().runAsync(task -> {
             try {
                 configSnapshot.save(fileSnapshot);
             } catch (IOException e) {
@@ -183,9 +184,12 @@ public class LotteryManager {
             return;
         }
 
-        org.bukkit.Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+        final FileConfiguration configSnapshot = poolConfig;
+        final File fileSnapshot = poolFile;
+        // 纯文件写入，用异步调度兼容 Folia
+        plugin.getFoliaLib().getImpl().runAsync(task -> {
             try {
-                poolConfig.save(poolFile);
+                configSnapshot.save(fileSnapshot);
             } catch (IOException e) {
                 e.printStackTrace();
             }

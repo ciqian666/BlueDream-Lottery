@@ -231,7 +231,7 @@ public class LotteryAdminGUI implements Listener {
 
                     if (slot == 51) {
                         String current = pool.getAnimationType();
-                        java.util.List<String> modes = java.util.Arrays.asList("SLOT_MACHINE", "SHUFFLE", "STAR", "STORM", "CIRCLE", "PHANTOM", "JUDGMENT", "RIFT", "DIVINE", "PULSE", "THUNDER", "TIME_TRAVEL", "CROSS", "FIREWORK", "VR", "BLACKHOLE", "HELIX", "DECONSTRUCT");
+                        java.util.List<String> modes = java.util.Arrays.asList("SLOT_MACHINE", "SHUFFLE", "STAR", "STORM", "CIRCLE", "PHANTOM", "JUDGMENT", "RIFT", "DIVINE", "PULSE", "THUNDER", "TIME_TRAVEL", "CROSS", "FIREWORK", "VR", "BLACKHOLE", "HELIX", "DECONSTRUCT", "GALAXY", "METEOR", "TESSERACT");
                         int currentIndex = modes.indexOf(current);
                         int nextIndex;
                         if (event.isRightClick()) {
