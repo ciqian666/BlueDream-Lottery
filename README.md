@@ -148,6 +148,7 @@
 
 ## ◆ 相关链接 ◆
 
+- **MineBBS 原帖**：[https://www.minebbs.com/resources/bluedream-lottery-gui-folia-x.15023/](https://www.minebbs.com/resources/bluedream-lottery-gui-folia-x.15023/)
 - **b 站介绍视频**（1.0.0 版本，有些过时）：[BV1ux6JBBEUe](https://www.bilibili.com/video/BV1ux6JBBEUe)
 - **GitHub 开源地址**：[https://github.com/ciqian666/BlueDream-Lottery](https://github.com/ciqian666/BlueDream-Lottery)
 - **bStats 统计**：[https://bstats.org/plugin/bukkit/BlueDream_Lottery/32513](https://bstats.org/plugin/bukkit/BlueDream_Lottery/32513)
