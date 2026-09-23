@@ -41,6 +41,25 @@ public class HologramManager implements org.bukkit.event.Listener {
     }
 
     @org.bukkit.event.EventHandler
+    public void onWorldLoad(org.bukkit.event.world.WorldLoadEvent event) {
+        Map<Location, String> restored = plugin.getManager().cacheBlocksForWorld(event.getWorld());
+        if (!isSupported || !plugin.getConfig().getBoolean("hologram.enabled", true)) return;
+
+        for (Map.Entry<Location, String> entry : restored.entrySet()) {
+            createHologram(entry.getKey(), entry.getValue());
+        }
+    }
+
+    @org.bukkit.event.EventHandler(priority = org.bukkit.event.EventPriority.MONITOR, ignoreCancelled = true)
+    public void onWorldUnload(org.bukkit.event.world.WorldUnloadEvent event) {
+        org.bukkit.World world = event.getWorld();
+        activeItemHolograms.keySet().removeIf(loc -> world.equals(loc.getWorld()));
+        activeTextHolograms.keySet().removeIf(loc -> world.equals(loc.getWorld()));
+        itemIndices.keySet().removeIf(loc -> world.equals(loc.getWorld()));
+        plugin.getManager().uncacheBlocksForWorld(world);
+    }
+
+    @org.bukkit.event.EventHandler
     public void onChunkLoad(org.bukkit.event.world.ChunkLoadEvent event) {
         if (!isSupported || !plugin.getConfig().getBoolean("hologram.enabled", true)) return;
 

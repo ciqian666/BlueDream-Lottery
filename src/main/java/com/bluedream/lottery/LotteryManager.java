@@ -61,11 +61,52 @@ public class LotteryManager {
         if (parts.length < 4) return null;
         org.bukkit.World world = org.bukkit.Bukkit.getWorld(parts[0]);
         if (world == null) return null;
+        return stringToLocation(parts, world);
+    }
+
+    private org.bukkit.Location stringToLocation(String s, org.bukkit.World world) {
+        if (s == null || s.isEmpty() || world == null) return null;
+        String[] parts = s.split(",");
+        if (parts.length < 4 || !world.getName().equals(parts[0])) return null;
+        return stringToLocation(parts, world);
+    }
+
+    private org.bukkit.Location stringToLocation(String[] parts, org.bukkit.World world) {
         try {
             return new org.bukkit.Location(world, Integer.parseInt(parts[1]), Integer.parseInt(parts[2]), Integer.parseInt(parts[3]));
         } catch (NumberFormatException e) {
             return null;
         }
+    }
+
+    /**
+     * Rebuilds the runtime location cache for a world that became available after
+     * this plugin initially loaded. The string-based bindings are deliberately kept
+     * even when their world is unavailable, so right-click lookup and persistence
+     * remain intact until the world can be resolved.
+     */
+    public synchronized Map<org.bukkit.Location, String> cacheBlocksForWorld(org.bukkit.World world) {
+        Map<org.bukkit.Location, String> restored = new java.util.HashMap<>();
+        if (world == null) return restored;
+
+        // Drop Location keys belonging to an older instance of the same world.
+        cachedLocations.keySet().removeIf(loc ->
+                loc.getWorld() != null && world.getName().equals(loc.getWorld().getName()));
+
+        for (Map.Entry<String, String> entry : lotteryBlocks.entrySet()) {
+            org.bukkit.Location loc = stringToLocation(entry.getKey(), world);
+            if (loc != null) {
+                cachedLocations.put(loc, entry.getValue());
+                restored.put(loc, entry.getValue());
+            }
+        }
+        return restored;
+    }
+
+    public synchronized void uncacheBlocksForWorld(org.bukkit.World world) {
+        if (world == null) return;
+        cachedLocations.keySet().removeIf(loc ->
+                loc.getWorld() != null && world.getName().equals(loc.getWorld().getName()));
     }
 
     public synchronized void saveBlocks() {

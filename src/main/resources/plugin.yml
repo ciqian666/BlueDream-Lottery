@@ -1,5 +1,5 @@
 name: BlueDream-Lottery
-version: 1.2.2
+version: 1.2.3
 main: com.bluedream.lottery.BlueDreamLottery
 api-version: '1.20'
 folia-supported: true

@@ -50,8 +50,8 @@ public class BlueDreamLottery extends JavaPlugin {
             manager = new LotteryManager(this);
             playerDataManager = new PlayerDataManager(this);
             hologramManager = new HologramManager(this);
-            hologramManager.updateAllHolograms();
             getServer().getPluginManager().registerEvents(hologramManager, this);
+            hologramManager.updateAllHolograms();
             adminGUI = new LotteryAdminGUI(this);
             playGUI = new LotteryPlayGUI(this);
             statsGUI = new LotteryStatsGUI(this);
